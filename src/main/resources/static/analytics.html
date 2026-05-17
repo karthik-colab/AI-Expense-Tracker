@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Analytics — AI Expense Tracker</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon">💰</div><div class="logo-text">AI <span>Expense</span><br/>Tracker</div></div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <a class="nav-item" href="/dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <a class="nav-item" href="/expenses.html"><span class="nav-icon">💳</span> Expenses</a>
+    <a class="nav-item" href="/budget.html"><span class="nav-icon">🎯</span> Budget</a>
+    <a class="nav-item active" href="/analytics.html"><span class="nav-icon">📈</span> Analytics</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="/profile.html"><span class="nav-icon">👤</span> Profile</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar" id="sidebar-avatar">👤</div>
+      <div class="user-info"><div class="user-name" id="sidebar-name">User</div><div class="user-email" id="sidebar-email">—</div></div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+<main class="main">
+  <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+    <div><h1>📈 Analytics</h1><p>Deep insights into your spending patterns</p></div>
+    <div style="display:flex;gap:10px;align-items:center" class="analytics-header-right">
+      <select id="a-month" onchange="loadAnalytics()" style="padding:9px 14px;background:#1a1928;border:1px solid var(--border);border-radius:10px;color:#fffffe;font-family:Inter,sans-serif;font-size:0.85rem;outline:none">
+        <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+        <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+        <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="a-year" onchange="loadAnalytics()" style="padding:9px 14px;background:#1a1928;border:1px solid var(--border);border-radius:10px;color:#fffffe;font-family:Inter,sans-serif;font-size:0.85rem;outline:none">
+        <option value="2025">2025</option><option value="2026" selected>2026</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STAT STRIP -->
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-card" style="--color:#6c63ff"><div class="stat-icon">💸</div><div><div class="stat-label">Total Spent</div><div class="stat-value" id="a-spent">₹0</div></div></div>
+    <div class="stat-card" style="--color:#06d6a0"><div class="stat-icon">🎯</div><div><div class="stat-label">Budget</div><div class="stat-value" id="a-budget">₹0</div></div></div>
+    <div class="stat-card" style="--color:#ffd166"><div class="stat-icon">🧾</div><div><div class="stat-label">Transactions</div><div class="stat-value" id="a-count">0</div></div></div>
+    <div class="stat-card" style="--color:#f72585"><div class="stat-icon">📊</div><div><div class="stat-label">Avg Per Expense</div><div class="stat-value" id="a-avg">₹0</div></div></div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">Category Spending</div>
+      <div style="height:260px"><canvas id="bar-chart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">Category Share</div>
+      <div style="height:260px;display:flex;align-items:center"><canvas id="pie-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CATEGORY BREAKDOWN TABLE + AI INSIGHTS -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">Category Breakdown</div>
+      <div id="cat-breakdown">
+        <div class="empty-state"><div class="empty-icon">📊</div><p>No data yet</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">🤖 AI Insights</div>
+      <div id="a-insights">
+        <div class="empty-state"><div class="empty-icon">🔍</div><p>Loading insights...</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+let barChart = null, pieChart = null;
+const COLORS = ['#6c63ff','#f72585','#06d6a0','#ffd166','#4ecdc4','#ff6b6b','#8b5cf6','#ffa07a'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  initSidebar();
+  document.getElementById('a-month').value = currentMonth();
+  loadAnalytics();
+});
+
+async function loadAnalytics() {
+  const m = document.getElementById('a-month').value;
+  const y = document.getElementById('a-year').value;
+  try {
+    const data = await apiFetch(`/analytics?userId=${session.userId}&month=${m}&year=${y}`);
+    if (!data) return;
+
+    document.getElementById('a-spent').textContent  = fmtCurrency(data.totalSpent);
+    document.getElementById('a-budget').textContent = fmtCurrency(data.monthlyBudget);
+    document.getElementById('a-count').textContent  = data.expenseCount;
+    document.getElementById('a-avg').textContent    = fmtCurrency(data.averageExpense);
+
+    const cats   = data.categoryBreakdown || {};
+    const labels = Object.keys(cats);
+    const values = Object.values(cats).map(Number);
+
+    // Bar Chart
+    if (barChart) barChart.destroy();
+    if (labels.length) {
+      barChart = new Chart(document.getElementById('bar-chart').getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label:'Amount (₹)', data:values, backgroundColor: COLORS, borderRadius:8, borderSkipped:false }] },
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false} },
+          scales:{ x:{ticks:{color:'#8b8fa8'},grid:{display:false}}, y:{ticks:{color:'#8b8fa8',callback:v=>'₹'+v.toLocaleString()},grid:{color:'rgba(255,255,255,0.04)'}} }
+        }
+      });
+    }
+
+    // Pie Chart
+    if (pieChart) pieChart.destroy();
+    if (labels.length) {
+      pieChart = new Chart(document.getElementById('pie-chart').getContext('2d'), {
+        type:'doughnut',
+        data:{ labels, datasets:[{data:values,backgroundColor:COLORS,borderWidth:0,hoverOffset:10}] },
+        options:{ plugins:{legend:{position:'bottom',labels:{color:'#8b8fa8',font:{size:11},padding:10}}}, cutout:'60%', responsive:true, maintainAspectRatio:false }
+      });
+    }
+
+    // Category table
+    const total = values.reduce((a,b)=>a+b,0);
+    const catEl = document.getElementById('cat-breakdown');
+    if (!labels.length) { catEl.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>No data</p></div>'; }
+    else {
+      catEl.innerHTML = labels.map((cat,i) => {
+        const pct = total > 0 ? ((values[i]/total)*100).toFixed(1) : 0;
+        return `<div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>${categoryBadge(cat)}</span>
+            <span style="font-weight:600">${fmtCurrency(values[i])} <span style="color:var(--muted);font-size:0.78rem">(${pct}%)</span></span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${COLORS[i]||'var(--primary)'}"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    // Insights
+    const insEl = document.getElementById('a-insights');
+    const ins = data.aiInsights || [];
+    if (!ins.length) { insEl.innerHTML='<div class="empty-state"><div class="empty-icon">🤖</div><p>Add expenses to get AI insights</p></div>'; }
+    else insEl.innerHTML = ins.map(i=>`<div class="insight-item"><span class="insight-icon">${i[0]}</span><span class="insight-text">${i}</span></div>`).join('');
+
+  } catch(e) {
+    showToast('Failed to load analytics: ' + e.message, 'error');
+  }
+}
+</script>
+</body>
+</html>

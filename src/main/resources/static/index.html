@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Expense Tracker — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:   #6c63ff;
+      --primary-d: #574fd6;
+      --accent:    #f72585;
+      --bg:        #0f0e17;
+      --card:      rgba(255,255,255,0.05);
+      --border:    rgba(255,255,255,0.10);
+      --text:      #fffffe;
+      --muted:     #a7a9be;
+      --success:   #06d6a0;
+      --error:     #ef233c;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: var(--text);
+    }
+
+    /* Animated background blobs */
+    .bg-blobs {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .blob-1 { width: 500px; height: 500px; background: #6c63ff; top: -150px; left: -100px; animation-delay: 0s; }
+    .blob-2 { width: 400px; height: 400px; background: #f72585; bottom: -120px; right: -80px; animation-delay: 3s; }
+    .blob-3 { width: 300px; height: 300px; background: #4cc9f0; top: 40%; left: 40%; animation-delay: 6s; }
+
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* Card */
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 440px;
+      background: var(--card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 44px 40px 40px;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+      animation: slideUp 0.6s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px; justify-content: center;
+    }
+    .logo-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 8px 24px rgba(108,99,255,0.4);
+    }
+    .logo-text { font-size: 1.3rem; font-weight: 700; }
+    .logo-text span { color: var(--primary); }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px; padding: 4px;
+      margin-bottom: 32px;
+    }
+    .tab-btn {
+      flex: 1; padding: 10px;
+      background: transparent; border: none;
+      color: var(--muted); font-family: 'Inter', sans-serif;
+      font-size: 0.9rem; font-weight: 500;
+      border-radius: 9px; cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.4);
+    }
+    .tab-btn:not(.active):hover { color: var(--text); }
+
+    /* Form panels */
+    .form-panel { display: none; animation: fadeIn 0.3s ease; }
+    .form-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Heading */
+    .form-heading { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .form-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+
+    /* Input group */
+    .input-group { margin-bottom: 18px; }
+    .input-group label {
+      display: block; font-size: 0.82rem; font-weight: 500;
+      color: var(--muted); margin-bottom: 8px; letter-spacing: 0.02em;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap .icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; opacity: 0.5; pointer-events: none;
+    }
+    .input-wrap input {
+      width: 100%; padding: 13px 14px 13px 42px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 12px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 0.95rem;
+      transition: all 0.2s ease; outline: none;
+    }
+    .input-wrap input::placeholder { color: rgba(255,255,255,0.25); }
+    .input-wrap input:focus {
+      border-color: var(--primary);
+      background: rgba(108,99,255,0.08);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+    }
+
+    /* Eye toggle */
+    .eye-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 16px; padding: 2px;
+    }
+    .eye-toggle:hover { color: var(--text); }
+
+    /* Submit btn */
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Inter', sans-serif;
+      font-size: 1rem; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 24px rgba(108,99,255,0.35);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(108,99,255,0.5);
+    }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alert */
+    .alert {
+      display: none; padding: 12px 16px;
+      border-radius: 10px; font-size: 0.875rem;
+      margin-bottom: 20px; font-weight: 500;
+      animation: fadeIn 0.3s ease;
+    }
+    .alert.success { background: rgba(6,214,160,0.12); border: 1px solid rgba(6,214,160,0.3); color: var(--success); }
+    .alert.error   { background: rgba(239,35,60,0.12);  border: 1px solid rgba(239,35,60,0.3);  color: var(--error); }
+
+    /* Token card */
+    .token-box {
+      display: none; margin-top: 24px;
+      background: rgba(6,214,160,0.07);
+      border: 1px solid rgba(6,214,160,0.25);
+      border-radius: 14px; padding: 18px;
+      animation: fadeIn 0.4s ease;
+    }
+    .token-box h4 { font-size: 0.85rem; color: var(--success); margin-bottom: 12px; font-weight: 600; }
+    .token-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; }
+    .token-row .label { color: var(--muted); }
+    .token-row .value { color: var(--text); font-weight: 500; font-family: monospace; font-size: 0.78rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .copy-btn {
+      margin-top: 12px; width: 100%; padding: 8px;
+      background: rgba(6,214,160,0.15); border: 1px solid rgba(6,214,160,0.3);
+      border-radius: 8px; color: var(--success);
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .copy-btn:hover { background: rgba(6,214,160,0.25); }
+
+    /* Divider */
+    .divider { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 20px 0; position: relative; }
+    .divider::before, .divider::after {
+      content: ''; position: absolute; top: 50%; width: 40%; height: 1px;
+      background: var(--border);
+    }
+    .divider::before { left: 0; } .divider::after { right: 0; }
+
+    /* Dashboard redirect btn */
+    .btn-dashboard {
+      display: none; width: 100%; padding: 13px;
+      background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.35);
+      border-radius: 12px; color: var(--primary);
+      font-family: 'Inter', sans-serif; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; margin-top: 12px;
+      transition: all 0.2s;
+    }
+    .btn-dashboard:hover { background: rgba(108,99,255,0.25); }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 28px; font-size: 0.78rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-blobs">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+</div>
+
+<!-- Login Card -->
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">💰</div>
+    <div class="logo-text">AI <span>Expense</span> Tracker</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+    <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Create Account</button>
+  </div>
+
+  <!-- ===== LOGIN PANEL ===== -->
+  <div class="form-panel active" id="panel-login">
+    <div class="form-heading">Welcome back 👋</div>
+    <div class="form-sub">Sign in to your account to continue</div>
+
+    <div class="alert" id="login-alert"></div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="input-group">
+        <label for="login-email">Email Address</label>
+        <div class="input-wrap">
+          <span class="icon">✉️</span>
+          <input type="email" id="login-email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="login-pass">Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input type="password" id="login-pass" placeholder="••••••••" required autocomplete="current-password" />
+          <button type="button" class="eye-toggle" onclick="togglePass('login-pass', this)">👁</button>
+        </div>
+      </div>
+
+      <button class="btn-submit" type="submit" id="login-btn">
+        <div class="spinner" id="login-spinner"></div>
+        <span id="login-btn-text">Sign In →</span>
+      </button>
+    </form>
+
+    <!-- Success Token Box -->
+    <div class="token-box" id="login-token-box">
+      <h4>✅ Login Successful!</h4>
+      <div class="token-row"><span class="label">User ID</span><span class="value" id="login-user-id">—</span></div>
+      <div class="token-row"><span class="label">Email</span><span class="value" id="login-user-email">—</span></div>
+      <div class="token-row"><span class="label">Token</span><span class="value" id="login-token">—</span></div>
+      <button class="copy-btn" onclick="copyToken()">📋 Copy Access Token</button>
+    </div>
+
+    <button class="btn-dashboard" id="dashboard-btn" onclick="goToDashboard()">🚀 Go to Dashboard</button>
+  </div>
+
+  <!-- ===== REGISTER PANEL ===== -->
+  <div class="form-panel" id="panel-register">
+    <div class="form-heading">Create account ✨</div>
+    <div class="form-sub">Start tracking your expenses today</div>
+
+    <div class="alert" id="reg-alert"></div>
+
+    <form id="reg-form" onsubmit="handleRegister(event)">
+      <div class="input-group">
+        <label for="reg-email">Email Address</label>
+        <div class="input-wrap">
+          <span class="icon">✉️</span>
+          <input type="email" id="reg-email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="reg-pass">Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input type="password" id="reg-pass" placeholder="Min 6 characters" required minlength="6" autocomplete="new-password" />
+          <button type="button" class="eye-toggle" onclick="togglePass('reg-pass', this)">👁</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="reg-pass2">Confirm Password</label>
+        <div class="input-wrap">
+          <span class="icon">🔐</span>
+          <input type="password" id="reg-pass2" placeholder="Re-enter password" required minlength="6" autocomplete="new-password" />
+        </div>
+      </div>
+
+      <button class="btn-submit" type="submit" id="reg-btn">
+        <div class="spinner" id="reg-spinner"></div>
+        <span id="reg-btn-text">Create Account →</span>
+      </button>
+    </form>
+  </div>
+
+  <div class="footer">
+    AI Expense Tracker &copy; 2026 &nbsp;•&nbsp; Powered by Supabase + Spring Boot
+  </div>
+</div>
+
+<script>
+  const API = 'http://localhost:8080/api/auth';
+
+  /* --- Tab switch --- */
+  function switchTab(tab) {
+    ['login','register'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`panel-${t}`).classList.toggle('active', t === tab);
+    });
+  }
+
+  /* --- Password toggle --- */
+  function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    btn.textContent = isPass ? '🙈' : '👁';
+  }
+
+  /* --- Show alert --- */
+  function showAlert(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `alert ${type}`;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 6000);
+  }
+
+  /* --- Loading state --- */
+  function setLoading(btnId, spinnerId, textId, loading, text = '') {
+    document.getElementById(btnId).disabled = loading;
+    document.getElementById(spinnerId).style.display = loading ? 'block' : 'none';
+    document.getElementById(textId).textContent = loading ? 'Please wait...' : text;
+  }
+
+  /* --- LOGIN --- */
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value;
+
+    setLoading('login-btn','login-spinner','login-btn-text', true);
+
+    try {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Invalid email or password');
+      }
+
+      // Show token box
+      document.getElementById('login-user-id').textContent    = data.userId    || '—';
+      document.getElementById('login-user-email').textContent = data.email     || email;
+      document.getElementById('login-token').textContent      = data.accessToken ? data.accessToken.substring(0, 40) + '...' : '—';
+      document.getElementById('login-token-box').style.display = 'block';
+      document.getElementById('dashboard-btn').style.display   = 'block';
+
+      // Save to session
+      sessionStorage.setItem('token',  data.accessToken);
+      sessionStorage.setItem('userId', data.userId);
+      sessionStorage.setItem('email',  data.email || email);
+
+    } catch (err) {
+      showAlert('login-alert', '❌ ' + err.message, 'error');
+    } finally {
+      setLoading('login-btn','login-spinner','login-btn-text', false, 'Sign In →');
+    }
+  }
+
+  /* --- REGISTER --- */
+  async function handleRegister(e) {
+    e.preventDefault();
+    const email = document.getElementById('reg-email').value.trim();
+    const pass  = document.getElementById('reg-pass').value;
+    const pass2 = document.getElementById('reg-pass2').value;
+
+    if (pass !== pass2) {
+      showAlert('reg-alert', '❌ Passwords do not match!', 'error');
+      return;
+    }
+
+    setLoading('reg-btn','reg-spinner','reg-btn-text', true);
+
+    try {
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Registration failed');
+      }
+
+      showAlert('reg-alert',
+        '✅ Account created! Check your email to confirm, then sign in.',
+        'success');
+      document.getElementById('reg-form').reset();
+      setTimeout(() => switchTab('login'), 2500);
+
+    } catch (err) {
+      showAlert('reg-alert', '❌ ' + err.message, 'error');
+    } finally {
+      setLoading('reg-btn','reg-spinner','reg-btn-text', false, 'Create Account →');
+    }
+  }
+
+  /* --- Copy token --- */
+  function copyToken() {
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      navigator.clipboard.writeText(token);
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy Access Token', 2000);
+    }
+  }
+
+  /* --- Dashboard redirect --- */
+  function goToDashboard() {
+    window.location.href = '/dashboard.html';
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Profile — AI Expense Tracker</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <style>
+    /* ── Profile-specific styles ───────────── */
+    .profile-hero {
+      display: flex; align-items: flex-end; gap: 28px;
+      padding: 36px 36px 28px;
+      background: linear-gradient(135deg, rgba(108,99,255,0.12), rgba(247,37,133,0.06));
+      border: 1px solid var(--border); border-radius: 20px;
+      margin-bottom: 24px; flex-wrap: wrap;
+    }
+
+    /* Avatar upload area */
+    .avatar-upload {
+      position: relative; flex-shrink: 0;
+      width: 110px; height: 110px;
+    }
+    .avatar-circle {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 42px; overflow: hidden; cursor: pointer;
+      border: 3px solid rgba(108,99,255,0.4);
+      box-shadow: 0 0 0 4px rgba(108,99,255,0.12), 0 8px 24px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .avatar-circle img {
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 50%;
+    }
+    .avatar-circle:hover { transform: scale(1.04); border-color: var(--primary); }
+    .avatar-overlay {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.25s ease; cursor: pointer;
+      font-size: 13px; color: #fff; font-weight: 600;
+      flex-direction: column; gap: 4px;
+    }
+    .avatar-circle:hover .avatar-overlay { opacity: 1; }
+    .avatar-overlay span { font-size: 22px; }
+    .avatar-upload input[type="file"] { display: none; }
+
+    /* Remove photo badge */
+    .avatar-remove {
+      position: absolute; top: 2px; right: 2px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--error); border: 2px solid var(--bg);
+      display: none; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 12px; color: #fff;
+      transition: transform 0.2s;
+    }
+    .avatar-remove:hover { transform: scale(1.15); }
+    .avatar-remove.visible { display: flex; }
+
+    /* Hero text */
+    .hero-info { flex: 1; min-width: 200px; }
+    .hero-name {
+      font-size: 1.8rem; font-weight: 800; line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .hero-email {
+      color: var(--muted); font-size: 0.88rem; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hero-joined {
+      font-size: 0.78rem; color: var(--muted);
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      padding: 4px 12px; border-radius: 20px; display: inline-block;
+    }
+    .hero-actions { margin-left: auto; display: flex; align-items: flex-end; gap: 10px; }
+
+    /* Profile stats */
+    .profile-stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .pstat {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px; text-align: center;
+      transition: all 0.2s;
+    }
+    .pstat:hover { border-color: rgba(255,255,255,0.16); transform: translateY(-1px); }
+    .pstat-value { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+    .pstat-label { font-size: 0.72rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Edit form card */
+    .edit-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+    .edit-card-title {
+      font-size: 1rem; font-weight: 600; margin-bottom: 20px;
+      padding-bottom: 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Input with icon */
+    .input-with-icon { position: relative; }
+    .input-with-icon .field-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      font-size: 15px; pointer-events: none;
+    }
+    .input-with-icon input { padding-left: 40px !important; }
+
+    /* Textarea */
+    .form-group textarea {
+      resize: vertical; min-height: 90px; line-height: 1.55;
+    }
+
+    /* Password field */
+    .pass-row { display: flex; gap: 10px; align-items: flex-end; }
+    .pass-row .form-group { flex: 1; margin-bottom: 0; }
+
+    /* Danger zone */
+    .danger-zone {
+      border: 1px solid rgba(239,35,60,0.2);
+      border-radius: 14px; padding: 20px;
+      background: rgba(239,35,60,0.04);
+    }
+    .danger-title { font-size: 0.9rem; font-weight: 600; color: var(--error); margin-bottom: 8px; }
+    .danger-desc  { font-size: 0.82rem; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+
+    /* Upload feedback */
+    .upload-hint {
+      font-size: 0.72rem; color: var(--muted); margin-top: 6px;
+      text-align: center;
+    }
+
+    /* Spinner inside button */
+    .btn-spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.6s linear infinite; display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 768px) {
+      .profile-hero { flex-direction: column; align-items: center; text-align: center; padding: 24px; gap: 16px; }
+      .hero-info { min-width: unset; }
+      .hero-actions { margin-left: 0; width: 100%; justify-content: center; }
+      .pass-row { flex-direction: column; }
+    }
+    @media (max-width: 480px) {
+      .hero-name { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">&#9776;</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💰</div>
+    <div class="logo-text">AI <span>Expense</span><br/>Tracker</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <a class="nav-item" href="/dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <a class="nav-item" href="/expenses.html"><span class="nav-icon">💳</span> Expenses</a>
+    <a class="nav-item" href="/budget.html"><span class="nav-icon">🎯</span> Budget</a>
+    <a class="nav-item" href="/analytics.html"><span class="nav-icon">📈</span> Analytics</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Account</div>
+    <a class="nav-item active" href="/profile.html"><span class="nav-icon">👤</span> Profile</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar" id="sidebar-avatar">👤</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">User</div>
+        <div class="user-email" id="sidebar-email">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- ── HERO ── -->
+  <div class="profile-hero">
+    <div class="avatar-upload">
+      <div class="avatar-circle" id="avatar-circle" onclick="document.getElementById('avatar-input').click()">
+        <span id="avatar-emoji">👤</span>
+        <div class="avatar-overlay">
+          <span>📷</span>Change
+        </div>
+      </div>
+      <div class="avatar-remove" id="avatar-remove" title="Remove photo" onclick="removePhoto()">✕</div>
+      <input type="file" id="avatar-input" accept="image/*" onchange="handlePhotoUpload(event)"/>
+    </div>
+
+    <div class="hero-info">
+      <div class="hero-name" id="hero-display-name">User</div>
+      <div class="hero-email">✉️ <span id="hero-email">—</span></div>
+      <div class="hero-joined" id="hero-joined">Joined recently</div>
+    </div>
+
+    <div class="hero-actions">
+      <button class="btn btn-primary" id="save-btn" onclick="saveProfile()">
+        <div class="btn-spinner" id="save-spinner"></div>
+        <span id="save-btn-text">💾 Save Changes</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="profile-stats" id="profile-stats">
+    <div class="pstat">
+      <div class="pstat-value" id="ps-total">₹0</div>
+      <div class="pstat-label">Total Spent</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-value" id="ps-month">₹0</div>
+      <div class="pstat-label">This Month</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-value" id="ps-txn">0</div>
+      <div class="pstat-label">Transactions</div>
+    </div>
+    <div class="pstat">
+      <div class="pstat-value" id="ps-avg">₹0</div>
+      <div class="pstat-label">Avg / Expense</div>
+    </div>
+  </div>
+
+  <!-- ── EDIT FORM ── -->
+  <div class="grid-2" style="margin-bottom:24px">
+
+    <!-- Personal Info -->
+    <div class="edit-card">
+      <div class="edit-card-title">✏️ Personal Information</div>
+
+      <div class="form-group">
+        <label>Display Name</label>
+        <div class="input-with-icon">
+          <span class="field-icon">👤</span>
+          <input type="text" id="f-name" placeholder="How should we call you?" maxlength="60"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-with-icon">
+          <span class="field-icon">✉️</span>
+          <input type="email" id="f-email" placeholder="—" disabled style="opacity:0.6;cursor:not-allowed"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Bio <span style="color:var(--muted);font-size:0.75rem">(optional)</span></label>
+        <textarea id="f-bio" placeholder="A short description about yourself..." maxlength="200"></textarea>
+        <div style="font-size:0.7rem;color:var(--muted);text-align:right;margin-top:4px">
+          <span id="bio-count">0</span>/200
+        </div>
+      </div>
+    </div>
+
+    <!-- Photo + Preferences -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Photo card -->
+      <div class="edit-card">
+        <div class="edit-card-title">📸 Profile Photo</div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0">
+          <div class="avatar-circle" style="width:90px;height:90px;font-size:34px" id="preview-circle" onclick="document.getElementById('avatar-input').click()">
+            <span id="preview-emoji">👤</span>
+            <div class="avatar-overlay"><span>📷</span></div>
+          </div>
+          <div class="upload-hint">Click avatar or button to upload<br/>JPG, PNG, GIF — max 2 MB</div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center" onclick="document.getElementById('avatar-input').click()">
+            📂 Choose Photo
+          </button>
+          <button class="btn btn-danger btn-sm" style="width:100%;justify-content:center" id="remove-btn" onclick="removePhoto()" style="display:none">
+            🗑️ Remove Photo
+          </button>
+        </div>
+      </div>
+
+      <!-- Danger zone -->
+      <div class="danger-zone">
+        <div class="danger-title">⚠️ Danger Zone</div>
+        <div class="danger-desc">Logging out will clear your session. Your data stays saved in the cloud.</div>
+        <button class="btn btn-danger btn-sm" onclick="logout()" style="width:100%;justify-content:center">
+          ⏻ Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+<script>
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+/* ── State ─────────────────────── */
+let pendingAvatarData = null; // new photo not yet saved
+
+/* ── Init ──────────────────────── */
+document.addEventListener('DOMContentLoaded', async () => {
+  initSidebar();
+
+  // Populate hero fields
+  const email = session.email || '—';
+  document.getElementById('hero-email').textContent = email;
+  document.getElementById('f-email').value = email;
+
+  // Load saved profile from server
+  try {
+    const profile = await apiFetch(`/profile?userId=${session.userId}`);
+    if (profile) {
+      const name = profile.displayName || email.split('@')[0];
+      document.getElementById('f-name').value   = name;
+      document.getElementById('f-bio').value    = profile.bio || '';
+      document.getElementById('hero-display-name').textContent = name;
+      document.getElementById('bio-count').textContent = (profile.bio || '').length;
+
+      if (profile.avatarData) {
+        setAvatarPreview(profile.avatarData);
+      }
+
+      if (profile.createdAt) {
+        const d = new Date(profile.createdAt);
+        document.getElementById('hero-joined').textContent =
+          'Joined ' + d.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+      }
+    } else {
+      // No profile yet — prefill name from email
+      const defaultName = email.split('@')[0];
+      document.getElementById('f-name').value = defaultName;
+      document.getElementById('hero-display-name').textContent = defaultName;
+    }
+  } catch (e) {
+    // Server might 404 (no profile yet) — that's fine
+    const defaultName = email.split('@')[0];
+    document.getElementById('f-name').value = defaultName;
+    document.getElementById('hero-display-name').textContent = defaultName;
+  }
+
+  // Load analytics stats
+  loadStats();
+
+  // Bio counter
+  document.getElementById('f-bio').addEventListener('input', function() {
+    document.getElementById('bio-count').textContent = this.value.length;
+  });
+
+  // Display name live preview
+  document.getElementById('f-name').addEventListener('input', function() {
+    document.getElementById('hero-display-name').textContent = this.value || session.email?.split('@')[0] || 'User';
+  });
+});
+
+/* ── Photo upload ────────────────── */
+function handlePhotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('Photo must be under 2 MB', 'error');
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select a valid image file', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pendingAvatarData = e.target.result; // base64 data URL
+    setAvatarPreview(pendingAvatarData);
+    showToast('Photo selected — click Save Changes to apply');
+  };
+  reader.readAsDataURL(file);
+  // Reset input so same file can be re-selected
+  event.target.value = '';
+}
+
+function setAvatarPreview(dataUrl) {
+  const imgHtml = `<img src="${dataUrl}" alt="Profile photo"/>`;
+
+  // Update main avatar circle in hero
+  const heroCircle = document.getElementById('avatar-circle');
+  heroCircle.innerHTML = `${imgHtml}<div class="avatar-overlay"><span>📷</span>Change</div>`;
+
+  // Update small preview circle in card
+  const previewCircle = document.getElementById('preview-circle');
+  previewCircle.innerHTML = `${imgHtml}<div class="avatar-overlay"><span>📷</span></div>`;
+
+  // Show remove button
+  document.getElementById('avatar-remove').classList.add('visible');
+  document.getElementById('remove-btn').style.display = 'block';
+
+  // Update sidebar immediately
+  const sidebarAvatar = document.getElementById('sidebar-avatar');
+  if (sidebarAvatar) {
+    sidebarAvatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>`;
+  }
+
+  // Persist to localStorage so all pages update instantly
+  localStorage.setItem('profilePhoto', dataUrl);
+}
+
+function removePhoto() {
+  pendingAvatarData = '';  // empty string = signal to clear
+  const emoji = '👤';
+
+  document.getElementById('avatar-circle').innerHTML =
+    `<span id="avatar-emoji">${emoji}</span><div class="avatar-overlay"><span>📷</span>Change</div>`;
+  document.getElementById('preview-circle').innerHTML =
+    `<span id="preview-emoji">${emoji}</span><div class="avatar-overlay"><span>📷</span></div>`;
+
+  document.getElementById('avatar-remove').classList.remove('visible');
+  document.getElementById('remove-btn').style.display = 'none';
+
+  const sidebarAvatar = document.getElementById('sidebar-avatar');
+  if (sidebarAvatar) sidebarAvatar.innerHTML = emoji;
+  localStorage.removeItem('profilePhoto');
+  showToast('Photo removed — click Save Changes to apply');
+}
+
+/* ── Save profile ────────────────── */
+async function saveProfile() {
+  const name = document.getElementById('f-name').value.trim();
+  const bio  = document.getElementById('f-bio').value.trim();
+
+  if (!name) { showToast('Display name cannot be empty', 'error'); return; }
+
+  // Loading state
+  const btn = document.getElementById('save-btn');
+  const spinner = document.getElementById('save-spinner');
+  const btnText = document.getElementById('save-btn-text');
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = 'Saving...';
+
+  try {
+    const body = { displayName: name, bio };
+    // Only include avatarData if user changed it (pendingAvatarData !== null)
+    if (pendingAvatarData !== null) body.avatarData = pendingAvatarData;
+
+    await apiFetch(`/profile?userId=${session.userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body)
+    });
+
+    // Persist display name so sidebar reflects it everywhere
+    localStorage.setItem('displayName', name);
+    document.getElementById('hero-display-name').textContent = name;
+    document.getElementById('sidebar-name').textContent = name;
+
+    pendingAvatarData = null; // reset pending state
+    showToast('Profile saved successfully! 🎉');
+
+  } catch (e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    spinner.style.display = 'none';
+    btnText.textContent = '💾 Save Changes';
+  }
+}
+
+/* ── Stats ───────────────────────── */
+async function loadStats() {
+  try {
+    const now = new Date();
+    const m = now.getMonth() + 1, y = now.getFullYear();
+
+    const [allData, monthData] = await Promise.all([
+      apiFetch(`/expenses?userId=${session.userId}`),
+      apiFetch(`/analytics?userId=${session.userId}&month=${m}&year=${y}`)
+    ]);
+
+    const allExpenses = allData || [];
+    const totalAll = allExpenses.reduce((s, e) => s + Number(e.amount), 0);
+
+    document.getElementById('ps-total').textContent  = fmtCurrency(totalAll);
+    document.getElementById('ps-txn').textContent    = allExpenses.length;
+
+    if (monthData) {
+      document.getElementById('ps-month').textContent = fmtCurrency(monthData.totalSpent);
+      document.getElementById('ps-avg').textContent   = fmtCurrency(monthData.averageExpense);
+    }
+  } catch (e) { /* stats are optional */ }
+}
+</script>
+</body>
+</html>

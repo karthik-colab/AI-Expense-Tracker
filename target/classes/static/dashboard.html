@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Dashboard — AI Expense Tracker</title>
+  <link rel="stylesheet" href="/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💰</div>
+    <div class="logo-text">AI <span>Expense</span><br/>Tracker</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Main</div>
+    <a class="nav-item active" href="/dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+    <a class="nav-item" href="/expenses.html"><span class="nav-icon">💳</span> Expenses</a>
+    <a class="nav-item" href="/budget.html"><span class="nav-icon">🎯</span> Budget</a>
+    <a class="nav-item" href="/analytics.html"><span class="nav-icon">📈</span> Analytics</a>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Account</div>
+    <a class="nav-item" href="/profile.html"><span class="nav-icon">👤</span> Profile</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar" id="sidebar-avatar">👤</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">User</div>
+        <div class="user-email" id="sidebar-email">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()" title="Logout">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-header">
+    <h1>Good evening 👋</h1>
+    <p id="dash-subtitle">Here's your financial overview for <strong id="month-label"></strong></p>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card" style="--color:#6c63ff">
+      <div class="stat-icon">💸</div>
+      <div>
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value" id="stat-spent">₹0</div>
+        <div class="stat-sub" id="stat-spent-sub">This month</div>
+      </div>
+    </div>
+    <div class="stat-card" style="--color:#06d6a0">
+      <div class="stat-icon">🎯</div>
+      <div>
+        <div class="stat-label">Budget Remaining</div>
+        <div class="stat-value" id="stat-remaining">₹0</div>
+        <div class="stat-sub" id="stat-budget-sub">of ₹0 budget</div>
+      </div>
+    </div>
+    <div class="stat-card" style="--color:#ffd166">
+      <div class="stat-icon">🧾</div>
+      <div>
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value" id="stat-count">0</div>
+        <div class="stat-sub" id="stat-avg">Avg: ₹0 / expense</div>
+      </div>
+    </div>
+    <div class="stat-card" style="--color:#f72585">
+      <div class="stat-icon">🏆</div>
+      <div>
+        <div class="stat-label">Top Category</div>
+        <div class="stat-value" style="font-size:1.1rem" id="stat-top-cat">—</div>
+        <div class="stat-sub" id="stat-top-amt">₹0 spent</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUDGET PROGRESS -->
+  <div class="card" style="margin-bottom:20px" id="budget-progress-card">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Budget Usage</div>
+        <div class="section-sub" id="budget-pct-label">0% used this month</div>
+      </div>
+      <a href="/budget.html" class="btn btn-ghost btn-sm">Set Budget</a>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="budget-bar" style="width:0%; background: linear-gradient(90deg,#6c63ff,#f72585)"></div>
+    </div>
+  </div>
+
+  <!-- CHARTS + INSIGHTS ROW -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <!-- Category donut -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">Category Breakdown</div>
+      </div>
+      <div style="position:relative;height:240px;display:flex;align-items:center;justify-content:center">
+        <canvas id="donut-chart"></canvas>
+        <div id="donut-empty" class="empty-state" style="display:none">
+          <div class="empty-icon">📭</div><p>No expenses yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insights -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-title">🤖 AI Insights</div>
+      </div>
+      <div id="insights-list">
+        <div class="empty-state"><div class="empty-icon">🔍</div><p>Loading insights...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT EXPENSES -->
+  <div class="card">
+    <div class="section-header">
+      <div class="section-title">Recent Expenses</div>
+      <a href="/expenses.html" class="btn btn-ghost btn-sm">View All →</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th><th>Category</th><th>Date</th><th style="text-align:right">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="recent-tbody">
+          <tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div><p>No expenses found</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="/app.js"></script>
+<script>
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('open');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+  }
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    initSidebar();
+    const now = new Date();
+    const m = now.getMonth()+1, y = now.getFullYear();
+    document.getElementById('month-label').textContent =
+      now.toLocaleString('en-IN',{month:'long'}) + ' ' + y;
+
+    // Greet by time
+    const hr = now.getHours();
+    const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    document.querySelector('.page-header h1').textContent = greet + ' 👋';
+
+    await loadDashboard(m, y);
+    await loadRecentExpenses();
+  });
+
+  let donutChart = null;
+
+  async function loadDashboard(m, y) {
+    try {
+      const data = await apiFetch(`/analytics?userId=${session.userId}&month=${m}&year=${y}`);
+      if (!data) return;
+
+      document.getElementById('stat-spent').textContent     = fmtCurrency(data.totalSpent);
+      document.getElementById('stat-remaining').textContent = fmtCurrency(data.budgetRemaining);
+      document.getElementById('stat-budget-sub').textContent= `of ${fmtCurrency(data.monthlyBudget)} budget`;
+      document.getElementById('stat-count').textContent     = data.expenseCount;
+      document.getElementById('stat-avg').textContent       = `Avg: ${fmtCurrency(data.averageExpense)} / expense`;
+
+      // Budget bar
+      const pct = Math.min(data.budgetUsedPercent || 0, 100);
+      document.getElementById('budget-bar').style.width = pct + '%';
+      document.getElementById('budget-bar').style.background =
+        pct >= 100 ? '#ef233c' : pct >= 80 ? '#ffd166' : 'linear-gradient(90deg,#6c63ff,#f72585)';
+      document.getElementById('budget-pct-label').textContent = `${pct.toFixed(1)}% used this month`;
+
+      // Top category
+      const cats = data.categoryBreakdown || {};
+      const topCat = Object.keys(cats)[0];
+      document.getElementById('stat-top-cat').textContent = topCat || '—';
+      document.getElementById('stat-top-amt').textContent = topCat ? fmtCurrency(cats[topCat]) + ' spent' : 'No data';
+
+      // Donut chart
+      renderDonut(cats);
+
+      // Insights
+      renderInsights(data.aiInsights || []);
+
+    } catch(e) {
+      document.getElementById('insights-list').innerHTML =
+        '<div class="insight-item"><span class="insight-icon">⚠️</span><span class="insight-text">Could not load analytics. Please check your connection.</span></div>';
+    }
+  }
+
+  function renderDonut(cats) {
+    const labels = Object.keys(cats);
+    const values = Object.values(cats).map(Number);
+    const COLORS = ['#6c63ff','#f72585','#06d6a0','#ffd166','#4ecdc4','#ff6b6b','#8b5cf6'];
+
+    if (labels.length === 0) {
+      document.getElementById('donut-empty').style.display = 'flex';
+      return;
+    }
+    const ctx = document.getElementById('donut-chart').getContext('2d');
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels, datasets: [{
+          data: values, backgroundColor: COLORS,
+          borderWidth: 0, hoverOffset: 8
+        }]
+      },
+      options: {
+        plugins: { legend: { position:'bottom', labels:{ color:'#8b8fa8', font:{size:11}, padding:12 } } },
+        cutout: '65%', responsive: true, maintainAspectRatio: false
+      }
+    });
+  }
+
+  function renderInsights(insights) {
+    const el = document.getElementById('insights-list');
+    if (!insights.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🤖</div><p>Add expenses to get AI insights</p></div>';
+      return;
+    }
+    el.innerHTML = insights.map(i =>
+      `<div class="insight-item"><span class="insight-icon">${i[0]}</span><span class="insight-text">${i}</span></div>`
+    ).join('');
+  }
+
+  async function loadRecentExpenses() {
+    try {
+      const data = await apiFetch(`/expenses?userId=${session.userId}`);
+      const rows = (data || []).slice(0, 8);
+      const tbody = document.getElementById('recent-tbody');
+      if (!rows.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">📭</div><p>No expenses yet. <a href="/expenses.html" style="color:var(--primary)">Add one!</a></p></div></td></tr>'; return; }
+      tbody.innerHTML = rows.map(e => `
+        <tr>
+          <td><strong>${e.title}</strong>${e.description ? `<br><small style="color:var(--muted)">${e.description}</small>` : ''}</td>
+          <td>${categoryBadge(e.category)}</td>
+          <td style="color:var(--muted)">${fmtDate(e.expenseDate)}</td>
+          <td style="text-align:right"><span class="amount debit">${fmtCurrency(e.amount)}</span></td>
+        </tr>`).join('');
+    } catch(e) {}
+  }
+</script>
+</body>
+</html>
