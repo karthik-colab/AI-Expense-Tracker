@@ -71,26 +71,15 @@ public class AuthService {
         }
     }
 
-    /** Extract a human-readable message from Supabase error JSON */
     private String extractSupabaseError(String body, String fallback) {
         try {
-            // Supabase error body: {"code":400,"msg":"Invalid login credentials","error_code":"invalid_credentials"}
-            if (body.contains("\"msg\"")) {
-                int start = body.indexOf("\"msg\"") + 6;
-                int colon = body.indexOf(":", start);
-                int quote1 = body.indexOf("\"", colon);
-                int quote2 = body.indexOf("\"", quote1 + 1);
-                if (quote1 >= 0 && quote2 > quote1)
-                    return body.substring(quote1 + 1, quote2);
-            }
-            if (body.contains("\"error_description\"")) {
-                int start = body.indexOf("\"error_description\"") + 19;
-                int colon = body.indexOf(":", start);
-                int q1 = body.indexOf("\"", colon);
-                int q2 = body.indexOf("\"", q1 + 1);
-                if (q1 >= 0 && q2 > q1)
-                    return body.substring(q1 + 1, q2);
-            }
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            java.util.Map<?, ?> map = mapper.readValue(body, java.util.Map.class);
+            if (map.containsKey("msg")) return String.valueOf(map.get("msg"));
+            if (map.containsKey("message")) return String.valueOf(map.get("message"));
+            if (map.containsKey("error_description")) return String.valueOf(map.get("error_description"));
+            if (map.containsKey("error_code")) return String.valueOf(map.get("error_code"));
+            if (map.containsKey("code")) return "Error code: " + map.get("code");
         } catch (Exception ignored) {}
         return fallback;
     }

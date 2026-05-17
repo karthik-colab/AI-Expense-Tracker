@@ -51,7 +51,7 @@ body {
 }
 .sidebar-overlay {
   display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5); z-index: 99;
+  background: rgba(0,0,0,0.5); z-index: 350;
 }
 .sidebar-overlay.open { display: block; }
 
@@ -360,15 +360,23 @@ select option { background: #1a1928 !important; color: #fffffe !important; }
   /* Sidebar slides in from left */
   .sidebar {
     transform: translateX(-100%);
-    z-index: 200;
+    z-index: 400; /* above overlay */
     width: 260px;
   }
   .sidebar.open { transform: translateX(0); }
 
-  /* Main takes full width */
+  /* Create a top navbar background for the hamburger menu */
+  body::before {
+    content: '';
+    position: fixed; top: 0; left: 0; right: 0; height: 72px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    z-index: 250;
+  }
+
+  /* Main takes full width, pushes down for the new top navbar */
   .main {
     margin-left: 0;
-    padding: 72px 16px 24px; /* top padding for hamburger */
+    padding: 92px 16px 24px; 
   }
 
   /* Page header stacks */
@@ -408,7 +416,7 @@ select option { background: #1a1928 !important; color: #fffffe !important; }
 
 /* ── Mobile (≤ 480px) ── */
 @media (max-width: 480px) {
-  .main { padding: 68px 12px 20px; }
+  .main { padding: 92px 12px 20px; }
   .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .stat-card { padding: 16px; }
   .stat-value { font-size: 1.15rem; }
