@@ -2,7 +2,7 @@
 // AI Expense Tracker — Shared App Utilities
 // ======================================================
 
-const API = 'http://localhost:8080/api';
+const API = '/api';
 
 // ── Session helpers ────────────────────────────────────
 const session = {
